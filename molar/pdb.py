@@ -32,7 +32,7 @@ class Pdb(pdb_basic.PdbBasic):
                 for residue in chain.residues:
                     self.molecules[-1].chains[-1].AddResidue(residue.name)
                     for atom in residue.atoms:
-                        atom.UpdateLine()
+                        atom.UpdateCrd()
                         self.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
                         self_atom = self.molecules[-1].chains[-1].residues[-1].atoms[-1]
                         self_atom.ApplyTransform(trans)
@@ -93,7 +93,7 @@ class Pdb(pdb_basic.PdbBasic):
                 for res in chain.residues:
                     pdb_out.molecules[-1].chains[-1].AddResidue(res.name)
                     for atom in res.atoms:
-                        atom.UpdateLine()
+                        atom.UpdateCrd()
                         pdb_out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
         return pdb_out
     
@@ -204,7 +204,7 @@ class Pdb(pdb_basic.PdbBasic):
                 for residue in chain.residues:
                     self.molecules[-1].chains[-1].AddResidue(residue.name)
                     for i,atom in enumerate(residue.atoms):
-                        atom.UpdateLine()
+                        atom.UpdateCrd()
                         atomcopy = copy.deepcopy(atom)
                         atomcopy.ApplyTransform(trans)
                         pointlocator.Update()
