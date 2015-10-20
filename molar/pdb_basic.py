@@ -29,8 +29,6 @@ class PdbBasic:
         termination_reached = True # to add the first molecule
         for line in self.lines:
             if line[0:4] =='ATOM' or (line[0:6]=='HETATM' and self.include_HETATM) :
-                line=line.replace("\n","")
-                line=line.replace("\r","") # getting rid of \n and \r in the line
                 ## add next molecule
                 if termination_reached:
                     self.AddMolecule()

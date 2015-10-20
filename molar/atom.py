@@ -16,6 +16,8 @@ class Atom:
                            "PA"," U","NP","PU","AM","CM","BK","CF"}
     def __init__(self,line_ext):
         self.pos = np.array([0,0,0],dtype='f')
+        line_ext=line_ext.replace("\n","") # getting rid of \n and \r in the line
+        line_ext=line_ext.replace("\r","") # getting rid of \n and \r in the line
         self.line = "%-80s\n" % line_ext
         self.pos[0] = float(self.line[30:38])
         self.pos[1] = float(self.line[38:46])
