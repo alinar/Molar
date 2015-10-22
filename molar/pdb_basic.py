@@ -15,11 +15,11 @@ class PdbBasic:
         self.index     = dict()     # make index file to be used with Gromacs.
         self.include_HETATM = True  # change it to False if you do not want to include HETATM.
 
-    def AddMolecule(self,ex_mol=None):
+    def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
             self.molecules.append(ex_mol)
         else:           
-            mol = molecule.Molecule();
+            mol = molecule.Molecule(name);
             self.molecules.append(mol)
     
     def ReadFile(self,file_name_str):
@@ -57,6 +57,9 @@ class PdbBasic:
                 res2        = line[17:20]
             elif line[0:3]=='TER' : ## prepare to add a molecule.
                 termination_reached = True
+                
+    def ReadFileGMX(self,file_name_str):
+        pass
     
     def PrintInfo(self,mol=0,chain=0):
         """printing information about the distributions.
