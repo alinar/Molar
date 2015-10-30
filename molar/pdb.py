@@ -6,6 +6,7 @@ import random as rand
 import numpy as np
 import math
 import copy
+import time, sys
 
 class Pdb(pdb_basic.PdbBasic):
     """Stores the pdb_basic file for making transformations."""
@@ -195,7 +196,7 @@ class Pdb(pdb_basic.PdbBasic):
         
     def CatTransformedCautious(self,pdb_ext,trans, pointlocator, cutoff = 1.2):
         """Transforms pdb_ext and concatenates it to self. checks if the new molecule is not within the
-        distance of cutoff form all the points in pointlocator.dataset .
+        distance of cutoff from all the points in pointlocator.dataset .
         """
         for molecule in pdb_ext.molecules:
             self.AddMolecule()
@@ -322,3 +323,27 @@ def RotateToParallel(v_const,v_2):
     trans2.PostMultiply()
     trans2.Concatenate(trans1)
     return trans2
+
+def update_progress(progress):
+    """update_progress() : Displays or updates a console progress bar
+    Accepts a float between 0 and 1. Any int will be converted to a float.
+    A value under 0 represents a 'halt'.
+    A value at 1 or bigger represents 100%
+    """
+    barLength = 30 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = "\rPercent: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
