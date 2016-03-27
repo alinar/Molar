@@ -27,7 +27,7 @@ class Pdb(pdb_basic.PdbBasic):
     def CatTransformed(self,pdb_ext,trans):
         """Transforms a hard copy of pdb_ext and concatenates it to self."""
         for molecule in pdb_ext.molecules:
-            self.AddMolecule()
+            self.AddMolecule(name=molecule.name)
             for chain in molecule.chains:
                 self.molecules[-1].AddChain(chain.id)
                 for residue in chain.residues:
@@ -84,11 +84,25 @@ class Pdb(pdb_basic.PdbBasic):
                 for atom in residue.atoms:
                     pdb_out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
         return pdb_out
+    
+    def MakeCopy(self):
+        """makes a hard copy and returns it."""
+        out = Pdb()
+        for molecule in self.molecules:
+            out.AddMolecule(name=molecule.name)
+            for chain in molecule.chains:
+                out.molecules[-1].AddChain(chain.id)
+                for residue in chain.residues:
+                    out.molecules[-1].chains[-1].AddResidue(residue.name)
+                    for atom in residue.atoms:
+                        atom.UpdateCrd()
+                        out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
+        return out
         
     def Clone(self):
         pdb_out = Pdb()
         for molecule in self.molecules:
-            pdb_out.AddMolecule()
+            pdb_out.AddMolecule(name=molecule.name)
             for chain in molecule.chains:
                 pdb_out.molecules[-1].AddChain(chain.id)
                 for res in chain.residues:
@@ -98,8 +112,8 @@ class Pdb(pdb_basic.PdbBasic):
                         pdb_out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
         return pdb_out
     
-    def Show(self,mode="dot"):
-        viewer = pdb_viewer.PdbViewer()
+    def Show(self,mode="dot",ext_actors=None): ## ext_actors is a list of external actors.
+        viewer = pdb_viewer.PdbViewer(ext_actors)
         viewer.SetPdb(self)
         viewer.AxesOn()
         viewer.Show(mode)
@@ -199,7 +213,7 @@ class Pdb(pdb_basic.PdbBasic):
         distance of cutoff from all the points in pointlocator.dataset .
         """
         for molecule in pdb_ext.molecules:
-            self.AddMolecule()
+            self.AddMolecule(name=molecule.name)
             for chain in molecule.chains:
                 self.molecules[-1].AddChain(chain.id)
                 for residue in chain.residues:
@@ -211,7 +225,7 @@ class Pdb(pdb_basic.PdbBasic):
                         pointlocator.Update()
                         dataset = pointlocator.GetDataSet()
                         points = dataset.GetPoints()
-
+                        
                         if points:
                             if i > 3:
                                 localcutoff = cutoff
@@ -231,7 +245,7 @@ class Pdb(pdb_basic.PdbBasic):
                         self_atom.ApplyTransform(trans)
                         pointlocator.InsertNextPoint(self_atom.pos)
                         points.InsertNextPoint(self_atom.pos)
-
+                        
                         coords = [[], [], []]                        
                         for coord in [0,1,2]:
                             if atomcopy.pos[coord] > self.unit_cell_size:
@@ -252,15 +266,6 @@ class Pdb(pdb_basic.PdbBasic):
                                     points.InsertNextPoint(atomcopy.pos)
                                     pointlocator.InsertNextPoint(atomcopy.pos)
                             
-                        #for coord in [0,1,2]:                            
-                         #   if atomcopy.pos[coord] > self.unit_cell_size:
-                          #      atomcopy.pos[coord] = atomcopy.pos[coord] - self.unit_cell_size
-                           # elif self_atom.pos[coord] < cutoff:                                
-                            #    atomcopy.pos[coord] = atomcopy.pos[coord] + self.unit_cell_size
-                            #else:
-                            #    continue
-                            #points.InsertNextPoint(atomcopy.pos)
-                            #pointlocator.InsertNextPoint(atomcopy.pos)
                         dataset.SetPoints(points)
                         self.pointlocator.SetDataSet(dataset)                        
         return True
@@ -344,6 +349,6 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = "\rPercent: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
+    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()

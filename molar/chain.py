@@ -16,7 +16,7 @@ class Chain:
     def AddResidue(self,name_str):
         self.residues.append(residue.Residue(name_str))
         
-    def GetStr(self,atom_index=1):
+    def GetStr(self,atom_index=1,make_TER=True):
         out_str = str()
         atom_number = 1
         res_number  = 1
@@ -25,12 +25,11 @@ class Chain:
             atom_number = atom_number + len(res_itr.atoms)
             res_number  = res_number  + 1
             atom_index += len(res_itr.atoms)
-        # make TER            
-        ter = 'TER' + ' ' * 24 + '\n'
-        #not working! 
-        #ter = ter[:6]  + '%5d' % (atom_number%100000) + ter[11:]
-        #ter = ter[:17] + self.residues[-1].name + ter[22:] 
-        #ter = ter[:23] + '%4d' % ((res_number-1)%10000) + ter[26:]
+        # make TER
+        if make_TER:
+            ter = 'TER' + ' ' * 24 + '\n'
+        else:
+            ter = ""
 
         out_str = out_str + ter
         return out_str

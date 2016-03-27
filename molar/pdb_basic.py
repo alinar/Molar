@@ -1,4 +1,3 @@
-
 '''
 Created on Mar 14, 2014
 
@@ -14,7 +13,7 @@ class PdbBasic:
         self.molecules = []
         self.index     = dict()     # make index file to be used with Gromacs.
         self.include_HETATM = True  # change it to False if you do not want to include HETATM.
-
+        self.mol_set = False
     def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
             self.molecules.append(ex_mol)
@@ -31,8 +30,7 @@ class PdbBasic:
             if line[0:4] =='ATOM' or (line[0:6]=='HETATM' and self.include_HETATM) :
                 ## add next molecule
                 if termination_reached:
-                    self.AddMolecule()
-                    self.molecules[-1].name = line[17:21]
+                    self.AddMolecule(name = line[17:21].replace(" ","") ) # not allow any space
                     termination_reached = False
                     id1 = ""
                     id2 = ""
@@ -59,18 +57,53 @@ class PdbBasic:
                 termination_reached = True
                 
     def ReadFileGMX(self,file_name_str):
-        pass
+        """add new molecule for every residue names. 
+           ignoring chains.
+           residue name field has one more character on the right side.
+           ([17:21] instead of [17:20])
+        """
+        pdb_file   = open(file_name_str)
+        self.lines = pdb_file.readlines()
+        pdb_file.close()
+        res_num_1 = 0
+        res_num_2 = -1
+        res1 = str("a")
+        res2 = str("b")
+        termination_reached = True # to add the first molecule
+        for line in self.lines:
+            if line[0:4] =='ATOM' or (line[0:6]=='HETATM' and self.include_HETATM) :
+                res_num_1   = int(line[22:26])
+                res1        = line[17:21]
+                ## add next molecule
+                if termination_reached or (res_num_1 != res_num_2) or (res1 != res2):
+                    ##
+                    self.AddMolecule( name=line[17:21].replace(" ","") ) # not allow any space
+                    self.molecules[-1].AddChain(" ")
+                    self.molecules[-1].chains[-1].AddResidue(line[17:21])
+                    ##
+                    res_num_1   = int(line[22:26])
+                    res1        = line[17:21]
+                    termination_reached = False
+                ## add atom
+                self.molecules[-1].chains[-1].residues[-1].AddAtom(line)
+                res_num_2   = int(line[22:26])
+                res2        = line[17:21]
+            elif line[0:3]=='TER' : ## prepare to add a molecule.
+                termination_reached = True
     
+    def MakeMolList(self):
+        self.mol_set = dict()
+        for mol in self.molecules:
+            if mol.name in self.mol_set:
+                self.mol_set[mol.name] += 1
+            else:
+                self.mol_set[mol.name] = 1
+        
     def PrintInfo(self,mol=0,chain=0):
         """printing information about the distributions.
         """
-        mol_set = dict()
-        for mol in self.molecules:
-            if mol.name in mol_set:
-                mol_set[mol.name] += 1
-            else:
-                mol_set[mol.name] = 1
-        print "molecule list and quantity:\n" , mol_set
+        self.MakeMolList()
+        print "molecule list and quantity:\n" , self.mol_set
         
     def WriteOnFile(self,file_name_str):
         file_str = str()
@@ -80,33 +113,29 @@ class PdbBasic:
         new_file.write(file_str)
         new_file.close()
     
-    def WriteOnFileGMX(self,file_name_str,write_index=False,index_file="index.ndx"):
+    def WriteOnFileGMX(self,file_name_str,make_TER=False):
         """Write files to be used in GROMACS: 
         same type molecules are written consecutively.
         The type of a molecule is its "name" property.
         """
-        mol_set = dict()
-        for mol in self.molecules:
-            if mol.name in mol_set:
-                mol_set[mol.name] += 1
-            else:
-                mol_set[mol.name] = 1
+        self.MakeMolList()
         file_str = str()
         atom_index = 1
-        for type in mol_set:
-            print "writing molecule type: ",type
+        for type in self.mol_set:
             for molecule in self.molecules:
-                if type == molecule.name:
-                    file_str = file_str + molecule.GetStr(atom_index)
-                    atom_index += molecule.NumOfAtoms()
+                if molecule.name == type:
+                    file_str = file_str + molecule.GetStr(atom_index , make_TER)
+                    atom_index        += molecule.NumOfAtoms()
+            print "writing molecule type: ",type
         new_file = file(file_name_str , 'w')
         new_file.write(file_str)
         new_file.close()
         
-        ############### index #######################
+    def WriteIndexGMX(self,index_file="index.ndx"):
+        ############### index ###################
         ## make System index including all the atoms.
-        if write_index:
-            ## System group with all of the atoms.
+        if True:
+            ## System group with all of the atoms. Other index groups should be made.
             self.index["System"]=list()
             for atom in self:
                 self.index["System"].append(atom)
@@ -125,7 +154,24 @@ class PdbBasic:
             new_file = file(index_file , 'w')
             new_file.write(ndx_string)
             new_file.close()
-    
+        print "Index file is written to : ",index_file
+            
+    def WriteTopologyGMX(self,topol_file="topol_list.top",name_map_dic=False):
+        ############### topology ###################
+        if not self.mol_set:
+            self.MakeMolList()
+        if True:
+            top_string=str()
+            for type,value in self.mol_set.iteritems():
+                if not name_map_dic:
+                    top_string += "%-15s%d\n" % (type,value)
+                else:
+                    top_string += "%-15s%d\n" % (name_map_dic[type],value)
+            new_file = file(topol_file , 'w')
+            new_file.write(top_string)
+            new_file.close()
+        print "Topology file is written to : ",topol_file
+
     def Center(self):
         center = np.array([0,0,0],dtype='f')
         num_mol = 0
@@ -216,7 +262,8 @@ class PdbBasic:
         for mol in self.molecules:
             for ch in mol.chains:
                 for re in ch.residues[:]: # with [:] a copy is made from the list.
-                                          # CAUTION: do not loop over a list and change the list inside the loop.
+                                          # CAUTION: do not loop over a list and remove 
+                                          #          elements of the list inside the loop.
                     if len(re.atoms)==0:
                          ch.residues.remove(re)                            
         # Chains
@@ -272,7 +319,7 @@ class PdbBasic:
     def Concatenate(self,pdb_ext):
         """concatenates pdb_ext to slef."""
         for molecule in pdb_ext.molecules:
-            self.AddMolecule(molecule)
+            self.AddMolecule(molecule,name=molecule.name)
     
     #################################
     ######## iterator ###############

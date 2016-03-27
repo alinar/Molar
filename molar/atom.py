@@ -4,16 +4,16 @@ class Atom:
     
     # Static variables #
     one_letter_elements = {"H","B","C","N","O","F","P","K","S","V","I","U"}     # one letter elements
-    two_letter_elements = {" H","HE","LI","BE"," B"," C"," N"," O"," F","NE",   # two letter elements
-                           "NA","MG","AL","SI"," P"," S","CL","AR"," K","CA",
-                           "SC","TI"," V","CR","MN","FE","CO","NI","CU","ZN",
-                           "GA","GE","AS","SE","BR","KR","RB","SR"," Y","ZR",
-                           "NB","MO","TC","RU","RH","PD","AG","CD","IN","SN",
-                           "SB","TE"," I","XE","CS","BA","LA","CE","PR","ND",
-                           "PM","SM","EU","GD","TB","DY","HO","ER","TM","YB",
-                           "LU","HF","TA"," W","RE","OS","IR","PT","AU","HG",
-                           "TL","PB","BI","PO","AT","RN","FR","RA","AC","TH",
-                           "PA"," U","NP","PU","AM","CM","BK","CF"}
+    two_letter_elements = {" H","He","Li","Be"," B"," C"," N"," O"," F","Ne",   # one and two letter elements
+                           "Na","Mg","Al","Si"," P"," S","Cl","Ar"," K","Ca",   # the 2nd letter is in the lower-case.
+                           "Sc","Ti"," V","Cr","Mn","Fe","Co","Ni","Cu","Zn",
+                           "Ga","Ge","As","Se","Br","Kr","Rb","Sr"," Y","Zr",
+                           "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn",
+                           "Sb","Te"," I","Xe","Cs","Ba","La","Ce","Pr","Nd",
+                           "Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb",
+                           "Lu","Hf","Ta"," W","Re","Os","Ir","Pt","Au","Hg",
+                           "Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th",
+                           "Pa"," U","Np","Pu","Am","Cm","Bk","Cf"} #
     def __init__(self,line_ext):
         self.pos = np.array([0,0,0],dtype='f')
         line_ext=line_ext.replace("\n","") # getting rid of \n and \r in the line
@@ -40,8 +40,7 @@ class Atom:
         self.line = self.line[:38] + "%8.3f" % self.pos[1] + self.line[46:]
         self.line = self.line[:46] + "%8.3f" % self.pos[2] + self.line[54:]
         ## fix element ##
-        if not self.element:
-        
+        if not self.element:  
             pass
         
     def GetStr(self,atom_sq_number=1,res_sq_number=1,atom_index=1):
@@ -63,14 +62,14 @@ class Atom:
         if self.element not in {""," ","  "}:
             return self.element
         for i in range(4):
-            if self.name[i] == " ":   # getting rid of spaces on the write side.
+            if self.name[i] == " ":   # getting rid of spaces on the right side.
                 continue
             else:
-                if self.name[i] in Atom.one_letter_elements: # one letter elements
-                    return self.name[i]
+                if self.name[i:i+2] in Atom.two_letter_elements: # two letter elements
+                    return self.name[i:i+2].upper()              # returned element in upper case.
                 else:
-                    if self.name[i:i+2] in Atom.two_letter_elements: # two letter elements
-                        return self.name[i:i+2]
+                    if self.name[i] in Atom.one_letter_elements: # one letter elements
+                        return self.name[i].upper()              # returned element in upper case.
                     else:
                         return ""
                     

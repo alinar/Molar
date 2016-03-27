@@ -28,7 +28,7 @@ class PdbInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 class PdbViewer:
     axis = False
     
-    def __init__(self):
+    def __init__(self,ext_actors=None): #ext_actors is a list of any external vtkActors.
         #initializations:
         self.renderer  = vtk.vtkRenderer()
         self.window    = vtk.vtkRenderWindow()
@@ -48,7 +48,10 @@ class PdbViewer:
         self.interactor.SetInteractorStyle(self.inter_sty)
         self.interactor.SetRenderWindow(self.window)
         self.axes_actor.SetTotalLength(100,100,100)
-        
+        if ext_actors:
+            self.ex_actors = ext_actors
+        else:
+            self.ex_actors=[]
     def SetPdb(self,pdb_ext):
         self.pdb = pdb_ext
         atom_numbers = 0
@@ -77,6 +80,10 @@ class PdbViewer:
             self.actor.SetMapper(self.mapper)
             self.window.AddRenderer(self.renderer)
             self.renderer.AddActor(self.actor)
+            ## add external actors ##
+            for act in self.ex_actors:
+                self.renderer.AddActor(act)
+            ##
             self.renderer.SetBackground(0.1,0.2,0.3)
             if self.axis:
                 self.renderer.AddActor(self.axes_actor)

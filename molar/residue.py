@@ -8,12 +8,9 @@ import numpy as np
 
 class Residue:
 
-    def __init__(self,name_ext):
+    def __init__(self,name_ext=""):
         self.atoms = []
-        if len(name_ext) == 3:
-            self.name = name_ext
-        else:
-            print('The residue number is more than three characters.')
+        self.name = name_ext
         
     def AddAtom(self,line_str):
         self.atoms.append(atom.Atom(line_str))

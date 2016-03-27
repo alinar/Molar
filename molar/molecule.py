@@ -16,11 +16,21 @@ class Molecule:
         new_chain = chain.Chain(chain_id_str)
         self.chains.append(new_chain)
         
-    def GetStr(self,atom_index = 1):
+    def GetStr(self,atom_index = 1,make_TER=True,name_res=True):
+        """name_res writes the molecule name on residue name place.
+           (residue name has 4 characters to be compatible with GMX.)
+        """
         out_str = str()
-        for chain_itr in self.chains:
-            out_str = out_str + chain_itr.GetStr(atom_index)
-            atom_index += chain_itr.NumOfAtoms()
+        if not name_res:
+            for chain_itr in self.chains:
+                out_str = out_str + chain_itr.GetStr(atom_index,make_TER)
+                atom_index += chain_itr.NumOfAtoms()
+        else:
+            for chain_itr in self.chains:
+                for line in chain_itr.GetStr(atom_index,make_TER).splitlines():
+                    line = line [:17] + "%4.4s"%self.name + line[21:] + "\n"
+                    out_str = out_str + line
+                    atom_index += chain_itr.NumOfAtoms()
         return out_str
     
     def NumOfAtoms(self):
@@ -39,7 +49,7 @@ class Molecule:
         return center
     
     def AddAtom(self,line):
-        """Addiing atom by the provided string(line) to the molecule.
+        """Adding atom by the provided string(line) to the molecule.
            Acting similar to PdbBasic.ReadFile()
         """
         q = 0
