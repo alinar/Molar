@@ -12,7 +12,7 @@ class Pdb(pdb_basic.PdbBasic):
     """Stores the pdb_basic file for making transformations."""
     def __init__(self,input_file=False):
         pdb_basic.PdbBasic.__init__(self)
-        self.hinge=[0,1]
+        self.hinge=[0,1] 
         if input_file:
             self.ReadFile(input_file)
     
@@ -212,64 +212,48 @@ class Pdb(pdb_basic.PdbBasic):
         """Transforms pdb_ext and concatenates it to self. checks if the new molecule is not within the
         distance of cutoff from all the points in pointlocator.dataset .
         """
-        for molecule in pdb_ext.molecules:
-            self.AddMolecule(name=molecule.name)
-            for chain in molecule.chains:
-                self.molecules[-1].AddChain(chain.id)
-                for residue in chain.residues:
-                    self.molecules[-1].chains[-1].AddResidue(residue.name)
-                    for i,atom in enumerate(residue.atoms):
-                        atom.UpdateCrd()
-                        atomcopy = copy.deepcopy(atom)
-                        atomcopy.ApplyTransform(trans)
-                        pointlocator.Update()
-                        dataset = pointlocator.GetDataSet()
-                        points = dataset.GetPoints()
-                        
-                        if points:
-                            if i > 3:
-                                localcutoff = cutoff
-                            else:
-                                localcutoff = cutoff
-                            distance = vtk.mutable(0.0)
-                            pointid = pointlocator.FindClosestPointWithinRadius(localcutoff , atomcopy.pos, distance)
-                            if pointid != -1:
-                                self.molecules[-1].chains[-1].residues.pop()
-                                self.molecules[-1].chains.pop()
-                                self.molecules.pop()
-                                return False
-                        else:
-                            points = vtk.vtkPoints()
-                        self.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
-                        self_atom = self.molecules[-1].chains[-1].residues[-1].atoms[-1]
-                        self_atom.ApplyTransform(trans)
-                        pointlocator.InsertNextPoint(self_atom.pos)
-                        points.InsertNextPoint(self_atom.pos)
-                        
-                        coords = [[], [], []]                        
-                        for coord in [0,1,2]:
-                            if atomcopy.pos[coord] > self.unit_cell_size:
-                                coords[coord].append(atomcopy.pos[coord])
-                                coords[coord].append(atomcopy.pos[coord]-self.unit_cell_size)
-                            elif self_atom.pos[coord] < cutoff:
-                                coords[coord].append(atomcopy.pos[coord])
-                                coords[coord].append(atomcopy.pos[coord]+self.unit_cell_size)
-                            else:
-                                coords[coord].append(atomcopy.pos[coord])
-
-                        for xcoord in coords[0]:
-                            for ycoord in coords[1]:
-                                for zcoord in coords[2]:
-                                    atomcopy.pos[0] = xcoord
-                                    atomcopy.pos[1] = ycoord
-                                    atomcopy.pos[2] = zcoord
-                                    points.InsertNextPoint(atomcopy.pos)
-                                    pointlocator.InsertNextPoint(atomcopy.pos)
-                            
-                        dataset.SetPoints(points)
-                        self.pointlocator.SetDataSet(dataset)                        
+        pdb_aux = pdb_ext.MakeCopy()
+        pdb_aux.ApplyTransform(trans)
+        pointlocator.Update()
+        dataset = pointlocator.GetDataSet()
+        points = dataset.GetPoints()
+        distance = vtk.mutable(0.0) # FindClosestPointWithinRadius writes on distance and its useless here.
+        if not points:
+            points = vtk.vtkPoints()
+            dataset.SetPoints(points)
+        if not self.empty:      # do not check if empty
+            for atom_itr in pdb_aux:
+                pointid = pointlocator.FindClosestPointWithinRadius(cutoff , atom_itr.pos, distance)
+                if pointid != -1: # There have been an atom within "cutoff" distance.
+                    return False
+        ## There have been no atom within the cutoff distance. 
+        self.Concatenate(pdb_aux)
+        self.empty = False          # not empty anymore.
+        ## add the newly added atom's position and its repeats to the pointlocator.
+        pos = [0,0,0]
+        for atom_itr in pdb_aux:
+            points.InsertNextPoint(atom_itr.pos)
+            pointlocator.InsertNextPoint(atom_itr.pos)
+            coords = [[], [], []]                        
+            for coord in [0,1,2]:
+                if atom_itr.pos[coord] > self.unit_cell_size:
+                    coords[coord].append(atom_itr.pos[coord])
+                    coords[coord].append(atom_itr.pos[coord]-self.unit_cell_size)
+                elif atom_itr.pos[coord] < cutoff:
+                    coords[coord].append(atom_itr.pos[coord])
+                    coords[coord].append(atom_itr.pos[coord]+self.unit_cell_size)
+                else:
+                    coords[coord].append(atom_itr.pos[coord])
+            for xcoord in coords[0]:
+                for ycoord in coords[1]:
+                    for zcoord in coords[2]:
+                        pos[0] = xcoord
+                        pos[1] = ycoord
+                        pos[2] = zcoord
+                        points.InsertNextPoint(pos)
+                        pointlocator.InsertNextPoint(pos)
         return True
-        
+         
 ###################################################
 ###################################################
 

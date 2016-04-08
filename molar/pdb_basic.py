@@ -14,6 +14,7 @@ class PdbBasic:
         self.index     = dict()     # make index file to be used with Gromacs.
         self.include_HETATM = True  # change it to False if you do not want to include HETATM.
         self.mol_set = False
+        self.empty   = True         # some methods use it.
     def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
             self.molecules.append(ex_mol)
