@@ -12,7 +12,7 @@ class Pdb(pdb_basic.PdbBasic):
     """Stores the pdb_basic file for making transformations."""
     def __init__(self,input_file=False):
         pdb_basic.PdbBasic.__init__(self)
-        self.hinge=[0,1] 
+        self.hinge=[0,1]
         if input_file:
             self.ReadFile(input_file)
     
@@ -112,12 +112,23 @@ class Pdb(pdb_basic.PdbBasic):
                         pdb_out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
         return pdb_out
     
-    def Show(self,mode="dot",ext_actors=None): ## ext_actors is a list of external actors.
-        viewer = pdb_viewer.PdbViewer(ext_actors)
+    def Show(self,mode="dot",ext_actors=None,axis=True,only_ext=False):
+        """
+           Visualize the system.
+           ext_actors is a list of external vtkActor(s).
+        """
+        viewer = pdb_viewer.PdbViewer(ext_actors) 
         viewer.SetPdb(self)
-        viewer.AxesOn()
-        viewer.Show(mode)
+        if axis ==True:
+            viewer.AxesOn()
+        viewer.Show(mode,only_ext)
 
+    def RetrunRenderer(self,mode="dot",background=[0.1,0.2,0.3]):
+        viewer = pdb_viewer.PdbViewer()
+        viewer.SetPdb(self)
+        renderer = viewer.RetrunRenderer(mode,False,background)
+        return renderer
+    
     def PointReflect(self):
         for atom in self:
             atom.SetPosition(-1 * atom.pos)
@@ -139,6 +150,12 @@ class Pdb(pdb_basic.PdbBasic):
         self.BringToCenter()
         trans = vtk.vtkTransform()
         trans.Translate(0.0,-self.Bounds()[1,1],0.0)
+        self.ApplyTransform(trans)
+
+    def BringToPositiveCorner(self):
+        bound = self.Bounds()
+        trans = vtk.vtkTransform()
+        trans.Translate([-bound[0,0],-bound[1,0],-bound[2,0]])
         self.ApplyTransform(trans)
 
     def SelectBond(self,atom1,atom2):
@@ -211,6 +228,7 @@ class Pdb(pdb_basic.PdbBasic):
     def CatTransformedCautious(self,pdb_ext,trans, pointlocator, cutoff = 1.2):
         """Transforms pdb_ext and concatenates it to self. checks if the new molecule is not within the
         distance of cutoff from all the points in pointlocator.dataset .
+        pointlocator :  vtkPointLocator()
         """
         pdb_aux = pdb_ext.MakeCopy()
         pdb_aux.ApplyTransform(trans)
@@ -284,7 +302,7 @@ def RotationToY(vec_ext):
     return trans
 
 def RotationToZ(vec_ext):
-    """Returns a transform that rotates vec to be parallel to Y axis."""
+    """Returns a transform that rotates vec to be parallel to Z axis."""
     vec = vec_ext / np.linalg.norm(vec_ext)
     trans = vtk.vtkTransform()
     trans.PostMultiply()
@@ -333,6 +351,18 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
+    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("|"*block , "-"*(barLength-block) , progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()
+
+def FindClosestPoint(point_in,point_set):
+    """returns the ID if the closest point to point_in in point_set. (rigorous algorithm)
+    """ 
+    min_distance = 1e8
+    id           = -1
+    for i,p in enumerate(point_set):
+        d = (point_in[0] - p[0])**2 + (point_in[1] - p[1])**2 + (point_in[2] - p[2])**2
+        if d<min_distance:
+            min_distance = d
+            id = i
+    return id

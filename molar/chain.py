@@ -5,7 +5,6 @@ Created on Mar 14, 2014
 '''
 import residue
 import numpy as np
-#from twisted.test.test_factories import Out
 
 class Chain:
     
@@ -20,6 +19,7 @@ class Chain:
         out_str = str()
         atom_number = 1
         res_number  = 1
+
         for res_itr in self.residues:
             out_str = out_str + res_itr.GetStr(atom_number,res_number,atom_index)
             atom_number = atom_number + len(res_itr.atoms)
@@ -30,7 +30,6 @@ class Chain:
             ter = 'TER' + ' ' * 24 + '\n'
         else:
             ter = ""
-
         out_str = out_str + ter
         return out_str
     
@@ -75,6 +74,3 @@ class Chain:
         self._i[3] = self._i[3] + 1
         return out_atom
     #####################################
-    
-###################################################
-###################################################

@@ -43,9 +43,14 @@ class Atom:
         if not self.element:  
             pass
         
+    def GetMolNameGMX(self):
+        """Returns the molecules name with Gromacs standard.
+        """
+        return self.line[17:21].replace(" ","")
+    
     def GetStr(self,atom_sq_number=1,res_sq_number=1,atom_index=1):
         self.UpdateCrd()
-        self.line  = self.line[:6]  + '%5d' % (atom_sq_number % 100000)  + self.line[11:]
+        self.line  = self.line[:6]   + '%5d' % (atom_sq_number % 100000)  + self.line[11:]
         self.line  = self.line[:22] + '%4d' % (res_sq_number % 10000)    + self.line[26:]
         self.line  = self.line[:76] + '%2s' % self.ExtractElement()[-2:] + self.line[78:]
         self.index = atom_index
@@ -66,11 +71,10 @@ class Atom:
                 continue
             else:
                 if self.name[i:i+2] in Atom.two_letter_elements: # two letter elements
-                    return self.name[i:i+2].upper()              # returned element in upper case.
+                    return self.name[i:i+2].upper()              # return element in upper case.
                 else:
                     if self.name[i] in Atom.one_letter_elements: # one letter elements
-                        return self.name[i].upper()              # returned element in upper case.
-                    else:
-                        return ""
+                        return self.name[i].upper()              # return element in upper case.
+        return ""
                     
                 

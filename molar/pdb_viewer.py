@@ -32,6 +32,7 @@ class PdbViewer:
         #initializations:
         self.renderer  = vtk.vtkRenderer()
         self.window    = vtk.vtkRenderWindow()
+        self.window.SetSize(1000,1000)
         self.mapper    = vtk.vtkPolyDataMapper()
         self.points    = vtk.vtkPoints()
         self.poly_data = vtk.vtkPolyData()
@@ -52,6 +53,7 @@ class PdbViewer:
             self.ex_actors = ext_actors
         else:
             self.ex_actors=[]
+            
     def SetPdb(self,pdb_ext):
         self.pdb = pdb_ext
         atom_numbers = 0
@@ -69,7 +71,28 @@ class PdbViewer:
         self.sphere.SetThetaResolution(resolution)
         self.sphere.SetPhiResolution(resolution)
          
-    def Show(self,mode="dot"):
+    def RetrunRenderer(self,mode="dot",only_ext=False,background=[0.1,0.2,0.3]):
+        if hasattr(self,'pdb'):
+            if mode == "dot":
+                self.glyph3d.SetSourceConnection(self.point_s.GetOutputPort())
+            elif mode == "sphere":
+                self.glyph3d.SetSourceConnection(self.sphere.GetOutputPort())
+            self.glyph3d.SetInputData(self.poly_data)
+            self.mapper.SetInputConnection(self.glyph3d.GetOutputPort())
+            self.actor.SetMapper(self.mapper)
+            if not only_ext:
+                self.renderer.AddActor(self.actor)
+            ## add external actors ##
+            for act in self.ex_actors:
+                self.renderer.AddActor(act)
+            ##
+            self.renderer.SetBackground(background)
+            if self.axis:
+                self.renderer.AddActor(self.axes_actor)
+            self.renderer.ResetCamera()
+        return self.renderer
+
+    def Show(self,mode="dot",only_ext=False):
         if hasattr(self,'pdb'):
             if mode == "dot":
                 self.glyph3d.SetSourceConnection(self.point_s.GetOutputPort())
@@ -79,7 +102,8 @@ class PdbViewer:
             self.mapper.SetInputConnection(self.glyph3d.GetOutputPort())
             self.actor.SetMapper(self.mapper)
             self.window.AddRenderer(self.renderer)
-            self.renderer.AddActor(self.actor)
+            if not only_ext:
+                self.renderer.AddActor(self.actor)
             ## add external actors ##
             for act in self.ex_actors:
                 self.renderer.AddActor(act)

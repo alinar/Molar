@@ -6,6 +6,7 @@ Created on Mar 14, 2014
 import molecule
 import atom
 import numpy as np
+import sys
 
 class PdbBasic:
 
@@ -15,6 +16,8 @@ class PdbBasic:
         self.include_HETATM = True  # change it to False if you do not want to include HETATM.
         self.mol_set = False
         self.empty   = True         # some methods use it.
+        self.cryst   = False
+ 
     def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
             self.molecules.append(ex_mol)
@@ -91,7 +94,12 @@ class PdbBasic:
                 res2        = line[17:21]
             elif line[0:3]=='TER' : ## prepare to add a molecule.
                 termination_reached = True
-    
+            elif line[0:6]=="CRYST1" :  ## read the unit-cell's dimensions
+                cx = float(line[6:15])
+                cy = float(line[15:24])
+                cz = float(line[24:33])
+                self.cryst=[cx,cy,cz]
+
     def MakeMolList(self):
         self.mol_set = dict()
         for mol in self.molecules:
@@ -111,6 +119,7 @@ class PdbBasic:
         for molecule in self.molecules:
             file_str = file_str + molecule.GetStr()
         new_file = file(file_name_str , 'w')
+        print "Writing on the file: ",file_name_str
         new_file.write(file_str)
         new_file.close()
     
@@ -125,8 +134,8 @@ class PdbBasic:
         for type in self.mol_set:
             for molecule in self.molecules:
                 if molecule.name == type:
-                    file_str = file_str + molecule.GetStr(atom_index , make_TER)
-                    atom_index        += molecule.NumOfAtoms()
+                    file_str = file_str + molecule.GetStr(atom_index , make_TER , update_name=True )
+                    atom_index         += molecule.NumOfAtoms()
             print "writing molecule type: ",type
         new_file = file(file_name_str , 'w')
         new_file.write(file_str)
@@ -188,6 +197,12 @@ class PdbBasic:
             for chain in mol.chains:
                 num = num + len(chain.residues)
         return num
+    
+    def NumOfAtoms(self):
+        i=0
+        for atom in self:
+            i+=1
+        return i
     
     def BoundAtoms(self):
         min_x = 1e9 
@@ -322,6 +337,16 @@ class PdbBasic:
         for molecule in pdb_ext.molecules:
             self.AddMolecule(molecule,name=molecule.name)
     
+    def MakeBackwardLinks(self):
+        for molecule in self.molecules:
+            for chain in molecule.chains:
+                chain.molecule = molecule
+                for residue in chain.residues:
+                    residue.chain = chain
+                    for atom in residue.atoms:
+                        atom.residue = residue
+        pass
+    
     #################################
     ######## iterator ###############
     def __iter__(self):
@@ -351,3 +376,27 @@ class PdbBasic:
     
 ###################################################
 ###################################################
+
+def update_progress(progress):
+    """update_progress() : Displays or updates a console progress bar
+    Accepts a float between 0 and 1. Any int will be converted to a float.
+    A value under 0 represents a 'halt'.
+    A value at 1 or bigger represents 100%
+    """
+    barLength = 30 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()

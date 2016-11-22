@@ -16,16 +16,16 @@ class Molecule:
         new_chain = chain.Chain(chain_id_str)
         self.chains.append(new_chain)
         
-    def GetStr(self,atom_index = 1,make_TER=True,name_res=True):
-        """name_res writes the molecule name on residue name place.
+    def GetStr(self,atom_index = 1,make_TER=True,update_name=False):
+        """name_res writes the molecule name on residue name domain on the pdb file.
            (residue name has 4 characters to be compatible with GMX.)
         """
         out_str = str()
-        if not name_res:
+        if not update_name:
             for chain_itr in self.chains:
                 out_str = out_str + chain_itr.GetStr(atom_index,make_TER)
                 atom_index += chain_itr.NumOfAtoms()
-        else:
+        else: # update_name ==True:
             for chain_itr in self.chains:
                 for line in chain_itr.GetStr(atom_index,make_TER).splitlines():
                     line = line [:17] + "%4.4s"%self.name + line[21:] + "\n"
