@@ -1,4 +1,5 @@
 import numpy as np
+import atomic_mass
 
 class Atom:
     

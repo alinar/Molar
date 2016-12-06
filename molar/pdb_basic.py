@@ -17,6 +17,7 @@ class PdbBasic:
         self.mol_set = False
         self.empty   = True         # some methods use it.
         self.cryst   = False
+        self.cryst_string = False
  
     def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
@@ -59,6 +60,8 @@ class PdbBasic:
                 res2        = line[17:20]
             elif line[0:3]=='TER' : ## prepare to add a molecule.
                 termination_reached = True
+            elif line[0:6]=='CRYST1': ## read crystal line
+                self.cryst_string = line
                 
     def ReadFileGMX(self,file_name_str):
         """add new molecule for every residue names. 
@@ -114,8 +117,15 @@ class PdbBasic:
         self.MakeMolList()
         print "molecule list and quantity:\n" , self.mol_set
         
+    def DefCryst(self,a=100,b=100,c=100,alpha=90,beta=90,gamma=90,sGroup="P 1", zvalue=1):
+        """This method is to be called by the user.
+        """
+        self.cryst_string = "CRYST1% 9.3f% 9.3f% 9.3f% 7.2f% 7.2f% 7.2f %-11s%4d\n" % (a,b,c,alpha,beta,gamma,sGroup,zvalue)
+        
     def WriteOnFile(self,file_name_str):
         file_str = str()
+        if self.cryst_string:
+            file_str = file_str + self.cryst_string
         for molecule in self.molecules:
             file_str = file_str + molecule.GetStr()
         new_file = file(file_name_str , 'w')
@@ -130,6 +140,8 @@ class PdbBasic:
         """
         self.MakeMolList()
         file_str = str()
+        if self.cryst_string:
+            file_str = file_str + self.cryst_string
         atom_index = 1
         for type in self.mol_set:
             for molecule in self.molecules:
