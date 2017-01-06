@@ -7,6 +7,7 @@ import numpy as np
 import math
 import copy
 import time, sys
+import itertools
 
 class Pdb(pdb_basic.PdbBasic):
     """Stores the pdb_basic file for making transformations."""
@@ -87,6 +88,7 @@ class Pdb(pdb_basic.PdbBasic):
     
     def MakeCopy(self):
         """makes a hard copy and returns it."""
+        self.Update()
         out = Pdb()
         for molecule in self.molecules:
             out.AddMolecule(name=molecule.name)
@@ -100,6 +102,7 @@ class Pdb(pdb_basic.PdbBasic):
         return out
         
     def Clone(self):
+        self.Update()
         pdb_out = Pdb()
         for molecule in self.molecules:
             pdb_out.AddMolecule(name=molecule.name)
@@ -117,6 +120,7 @@ class Pdb(pdb_basic.PdbBasic):
            Visualize the system.
            ext_actors is a list of external vtkActor(s).
         """
+        self.Update()
         viewer = pdb_viewer.PdbViewer(ext_actors) 
         viewer.SetPdb(self)
         if axis ==True:
@@ -124,6 +128,7 @@ class Pdb(pdb_basic.PdbBasic):
         viewer.Show(mode,only_ext)
 
     def RetrunRenderer(self,mode="dot",background=[0.1,0.2,0.3]):
+        self.Update()
         viewer = pdb_viewer.PdbViewer()
         viewer.SetPdb(self)
         renderer = viewer.RetrunRenderer(mode,False,background)
@@ -232,44 +237,43 @@ class Pdb(pdb_basic.PdbBasic):
         """
         pdb_aux = pdb_ext.MakeCopy()
         pdb_aux.ApplyTransform(trans)
-        pointlocator.Update()
         dataset = pointlocator.GetDataSet()
         points = dataset.GetPoints()
         distance = vtk.mutable(0.0) # FindClosestPointWithinRadius writes on distance and its useless here.
         if not points:
             points = vtk.vtkPoints()
             dataset.SetPoints(points)
-        if not self.empty:      # do not check if empty
+        else:
+            pointlocator.Update() # not sure what it does! but points should be defined before!
+        if pointlocator.GetDataSet().GetNumberOfPoints()!=0:      # do not check if empty
             for atom_itr in pdb_aux:
+                #print pointlocator.GetDataSet().GetNumberOfPoints()
                 pointid = pointlocator.FindClosestPointWithinRadius(cutoff , atom_itr.pos, distance)
                 if pointid != -1: # There have been an atom within "cutoff" distance.
                     return False
         ## There have been no atom within the cutoff distance. 
         self.Concatenate(pdb_aux)
-        self.empty = False          # not empty anymore.
         ## add the newly added atom's position and its repeats to the pointlocator.
         pos = [0,0,0]
         for atom_itr in pdb_aux:
             points.InsertNextPoint(atom_itr.pos)
             pointlocator.InsertNextPoint(atom_itr.pos)
-            coords = [[], [], []]                        
+            ## if atom position is close to any border of cell, it should be repeated in the locator.
+            close_coords = []  
             for coord in [0,1,2]:
-                if atom_itr.pos[coord] > self.unit_cell_size:
-                    coords[coord].append(atom_itr.pos[coord])
-                    coords[coord].append(atom_itr.pos[coord]-self.unit_cell_size)
-                elif atom_itr.pos[coord] < cutoff:
-                    coords[coord].append(atom_itr.pos[coord])
-                    coords[coord].append(atom_itr.pos[coord]+self.unit_cell_size)
-                else:
-                    coords[coord].append(atom_itr.pos[coord])
-            for xcoord in coords[0]:
-                for ycoord in coords[1]:
-                    for zcoord in coords[2]:
-                        pos[0] = xcoord
-                        pos[1] = ycoord
-                        pos[2] = zcoord
-                        points.InsertNextPoint(pos)
-                        pointlocator.InsertNextPoint(pos)
+                if (self.unit_cell_size - atom_itr.pos[coord]) < (2*cutoff)  or (atom_itr.pos[coord] > self.unit_cell_size):
+                    close_coords.append(-1*coord)
+                elif abs(atom_itr.pos[coord]) < (2*cutoff) or (atom_itr.pos[coord] < 0) :
+                    close_coords.append(coord)
+
+            for i in [1,2,3]: # extract subsets of close_coords with 1, 2 or 3 members
+                close_coords_set_of_subsets = set( itertools.combinations(close_coords,i) )
+                for close_coords_subset in close_coords_set_of_subsets:
+                    atom_pos_aux = np.copy(atom_itr.pos)
+                    for close_coords_member in close_coords_subset:
+                        atom_pos_aux[abs(close_coords_member)] += np.sign(close_coords_member) * self.unit_cell_size
+                    points.InsertNextPoint(atom_pos_aux)
+                    pointlocator.InsertNextPoint(atom_pos_aux)
         return True
          
 ###################################################

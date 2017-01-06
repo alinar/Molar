@@ -19,6 +19,11 @@ class PdbBasic:
         self.cryst   = False
         self.cryst_string = False
  
+    def Update(self):
+        """to be overridden by subclasses if needed. This method is called before any file writing.
+        """
+        pass
+ 
     def AddMolecule(self,ex_mol=None,name=""):
         if ex_mol:
             self.molecules.append(ex_mol)
@@ -123,6 +128,7 @@ class PdbBasic:
         self.cryst_string = "CRYST1% 9.3f% 9.3f% 9.3f% 7.2f% 7.2f% 7.2f %-11s%4d\n" % (a,b,c,alpha,beta,gamma,sGroup,zvalue)
         
     def WriteOnFile(self,file_name_str):
+        self.Update()
         file_str = str()
         if self.cryst_string:
             file_str = file_str + self.cryst_string
@@ -138,6 +144,7 @@ class PdbBasic:
         same type molecules are written consecutively.
         The type of a molecule is its "name" property.
         """
+        self.Update()
         self.MakeMolList()
         file_str = str()
         if self.cryst_string:
@@ -156,6 +163,7 @@ class PdbBasic:
     def WriteIndexGMX(self,index_file="index.ndx"):
         ############### index ###################
         ## make System index including all the atoms.
+        self.Update()
         if True:
             ## System group with all of the atoms. Other index groups should be made.
             self.index["System"]=list()
@@ -180,6 +188,7 @@ class PdbBasic:
             
     def WriteTopologyGMX(self,topol_file="topol_list.top",name_map_dic=False):
         ############### topology ###################
+        self.Update()
         if not self.mol_set:
             self.MakeMolList()
         if True:
@@ -291,7 +300,7 @@ class PdbBasic:
             for ch in mol.chains:
                 for re in ch.residues[:]: # with [:] a copy is made from the list.
                                           # CAUTION: do not loop over a list and remove 
-                                          #          elements of the list inside the loop.
+                                          #          elements from the same list inside the loop.
                     if len(re.atoms)==0:
                          ch.residues.remove(re)                            
         # Chains
@@ -326,7 +335,7 @@ class PdbBasic:
         pass
 
     def RemoveAtomByFunc(self,func):
-        """removes atoms that make func return anything else than False or None
+        """removes atoms that make func return anything other than False or None
         """
         for mol in self.molecules:
             for ch in mol.chains:
