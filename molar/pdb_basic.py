@@ -368,8 +368,41 @@ class PdbBasic:
                         atom.residue = residue
         pass
     
+    def BoxMask(self,box_dimensions,verbose=False):
+        """Mask self into the cuboid with the box_dimensions.
+        self should be centered first [self.BringToCenter()]
+        IMPORTANT: If the structure is too large, consider using molar.mask_box instead.
+        """
+        self.Update()
+        half_dim = [ 0.5*box_dimensions[0] , 0.5*box_dimensions[1] , 0.5*box_dimensions[2] ]
+        pdb_out = PdbBasic()
+        i=0
+        if verbose:
+            N=self.NumOfAtoms()
+        for molecule in self.molecules:
+            pdb_out.AddMolecule(name=molecule.name)
+            no_atom_in_mol = True
+            for chain in molecule.chains:
+                pdb_out.molecules[-1].AddChain(chain.id)
+                for res in chain.residues:
+                    pdb_out.molecules[-1].chains[-1].AddResidue(res.name)
+                    for atom in res.atoms:
+                        atom.UpdateCrd()
+                        i+=1
+                        if abs(atom.pos[0]) < half_dim[0] and abs(atom.pos[1]) < half_dim[1] and abs(atom.pos[2]) < half_dim[2]:
+                            pdb_out.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
+                            no_atom_in_mol = False
+                        if verbose:
+                            update_progress(float(i)/N)
+            if no_atom_in_mol:
+                # remove the last molecule if no atom is added. to avoid empty molecule.
+                pdb_out.molecules.pop(-1)
+        ###
+        del(self.molecules) # to make sure although it is garbage-collected in the next line
+        self.molecules = pdb_out.molecules
+    
     #################################
-    ######## iterator ###############
+    ######## iterator ##################
     def __iter__(self):
         self._i = [0,0,0,0]
         return self
