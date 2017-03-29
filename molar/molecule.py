@@ -11,6 +11,7 @@ class Molecule:
     def __init__(self,name_=""):
         self.chains = []
         self.name   = name_ #if needed!#
+        self.bonds_established = False
         
     def AddChain(self,chain_id_str):
         new_chain = chain.Chain(chain_id_str)
@@ -97,6 +98,40 @@ class Molecule:
         output = np.array([[min_x,max_x],[min_y,max_y],[min_z,max_z]])
         return output
             
+    def EstablishBonds(self):
+        if self.bonds_established:
+            return
+        else:
+            self.bonds_established = True
+        atom_list = []
+        for atom in self:  # atom_list should've been made since the iterator does not work for nested for loops.
+            atom_list.append(atom)
+            ## also reset any existing bond links.
+            atom.bonded_atoms = []
+        for atom1 in atom_list:
+            if atom1.ExtractElement().strip() == "H": # not calculated if the first atom is hydrogen
+                continue
+            for atom2 in atom_list:
+                if atom1 is not atom2:
+                    d = Distance(atom1,atom2)
+                    if d < 1.8:
+                        if atom2.ExtractElement().strip() == "H":
+                            if len(atom2.bonded_atoms) > 0: #if atom2 already has a bond link. also hasattr(atom2, 'distance_aux'):
+                                atom2.distance_aux = min (atom2.distance_aux , d)
+                                if atom2.distance_aux == d:
+                                    # remove the previous link between atom2 and another atom. 
+                                    atom2.bonded_atoms[0].bonded_atoms.remove(atom2)
+                                    # make a new link between atom1 and atom2.
+                                    atom2.bonded_atoms=[ atom1 ]
+                                    atom1.bonded_atoms.append(atom2)
+                            else:
+                                atom2.distance_aux = d
+                                atom2.bonded_atoms=[ atom1 ]
+                                atom1.bonded_atoms.append(atom2)
+                        else:
+                            atom1.bonded_atoms.append(atom2)
+                            # atom2 will find and append atom1 automatically since none are hydrogens
+
     #################################
     ######## iterator ###############
     def __iter__(self):
@@ -121,3 +156,8 @@ class Molecule:
     
 ###################################################
 ###################################################
+
+def Distance(atom1,atom2):
+    return np.linalg.norm(  [ atom1.pos[0] - atom2.pos[0] , atom1.pos[1] - atom2.pos[1] , atom1.pos[2] - atom2.pos[2] ] )
+    pass
+    

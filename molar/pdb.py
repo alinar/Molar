@@ -167,29 +167,28 @@ class Pdb(pdb_basic.PdbBasic):
         self.bond_atoms = [atom1,atom2]
                     
     def RotateBond(self,angle,mode="up"):
+        for mol in self.molecules:
+            mol.EstablishBonds()
         trans = vtk.vtkTransform()
         trans.PostMultiply()
-        if mode == 'down':
-            pos = self.bond_atoms[1].pos.copy()
-            v   = self.bond_atoms[0].pos - self.bond_atoms[1].pos
-            self.Translate(-1*pos)
-            trans.RotateWXYZ(angle, v[0], v[1], v[2])
-            for atom in self:
-                atom.ApplyTransform(trans)
-                if atom is self.bond_atoms[0]:
-                    atom.ApplyTransform(trans)
-                    break
-        elif mode == 'up':
-            pos = self.bond_atoms[0].pos.copy()
-            v   = self.bond_atoms[1].pos - self.bond_atoms[0].pos
-            self.Translate(-1*pos)
-            trans.RotateWXYZ(angle, v[0], v[1], v[2])
-            aux_flag = False
-            for atom in self:
-                if aux_flag:
-                    atom.ApplyTransform(trans)
-                elif atom is self.bond_atoms[0]:
-                    aux_flag = True
+        pos = self.bond_atoms[1].pos.copy()
+        v   = self.bond_atoms[0].pos - self.bond_atoms[1].pos
+        self.Translate(-1*pos)
+        trans.RotateWXYZ(angle, v[0], v[1], v[2])
+        ## nested recursive functions ##
+        def Recursive_trans(in_atom,in_trans,in_prev_atoms_list):
+            """
+            """
+            in_atom.ApplyTransform(in_trans)
+            in_prev_atoms_list.append(in_atom)
+            for bonded_atom in in_atom.bonded_atoms:
+                if bonded_atom not in in_prev_atoms_list:
+                    Recursive_trans(bonded_atom,in_trans,in_prev_atoms_list)
+            return
+        ###
+        prev_atoms_list_ = [ self.bond_atoms[0] ]
+        Recursive_trans( self.bond_atoms[1] , trans , prev_atoms_list_)
+        
         self.Translate(pos)
                     
     def RandomizeLocation(self,vec):

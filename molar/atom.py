@@ -27,6 +27,7 @@ class Atom:
         self.index  = 1
         ## Element ##
         self.element = self.line[76:78]
+        self.bonded_atoms=[]
         
     def ApplyTransform(self,trans): # trans is a vtk.vtkTransfom()
         trans.TransformPoint(self.pos,self.pos)
@@ -47,7 +48,7 @@ class Atom:
     def GetMolNameGMX(self):
         """Returns the molecules name with Gromacs standard.
         """
-        return self.line[17:21].replace(" ","")
+        return self.line[17:21].strip()
     
     def GetStr(self,atom_sq_number=1,res_sq_number=1,atom_index=1):
         self.UpdateCrd()

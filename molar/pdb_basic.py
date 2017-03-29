@@ -127,19 +127,23 @@ class PdbBasic:
         """
         self.cryst_string = "CRYST1% 9.3f% 9.3f% 9.3f% 7.2f% 7.2f% 7.2f %-11s%4d\n" % (a,b,c,alpha,beta,gamma,sGroup,zvalue)
         
-    def WriteOnFile(self,file_name_str):
+    def WriteOnFile(self,file_name_str,make_TER=False,include_CONECT=False):
         self.Update()
         file_str = str()
+        atom_index = 1
         if self.cryst_string:
             file_str = file_str + self.cryst_string
         for molecule in self.molecules:
-            file_str = file_str + molecule.GetStr()
+            file_str = file_str + molecule.GetStr(atom_index = 1,make_TER=False,update_name=False)
+            atom_index         += molecule.NumOfAtoms()
+        if include_CONECT:
+            file_str+=self.GetConectStr()
         new_file = file(file_name_str , 'w')
         print "Writing on the file: ",file_name_str
         new_file.write(file_str)
         new_file.close()
     
-    def WriteOnFileGMX(self,file_name_str,make_TER=False):
+    def WriteOnFileGMX(self,file_name_str,make_TER=False,include_CONECT=False):
         """Write files to be used in GROMACS: 
         same type molecules are written consecutively.
         The type of a molecule is its "name" property.
@@ -156,9 +160,32 @@ class PdbBasic:
                     file_str = file_str + molecule.GetStr(atom_index , make_TER , update_name=True )
                     atom_index         += molecule.NumOfAtoms()
             print "writing molecule type: ",type
+        
+        if include_CONECT:
+            file_str+=self.GetConectStr()    
         new_file = file(file_name_str , 'w')
         new_file.write(file_str)
         new_file.close()
+        
+    def GetConectStr(self):
+        """ Returning the CONECT string. It should be called after or inside WriteOnFile or WriteOnFileGMX
+        because the atom.index should be established first.
+        """
+        for mol in self.molecules:
+            mol.EstablishBonds()
+        out_str = ""
+        for atom in self:
+            if len(atom.bonded_atoms) ==1:
+                line="CONECT%5d%5d" % (atom.index,atom.bonded_atoms[0].index)
+            elif len(atom.bonded_atoms) ==2:
+                line="CONECT%5d%5d%5d" % (atom.index,atom.bonded_atoms[0].index , atom.bonded_atoms[1].index)
+            elif len(atom.bonded_atoms) ==3:
+                line="CONECT%5d%5d%5d%5d" % (atom.index,atom.bonded_atoms[0].index , atom.bonded_atoms[1].index ,  atom.bonded_atoms[2].index)
+            elif len(atom.bonded_atoms) ==4:
+                line="CONECT%5d%5d%5d%5d%5d" % (atom.index,atom.bonded_atoms[0].index , atom.bonded_atoms[1].index ,  atom.bonded_atoms[2].index , atom.bonded_atoms[3].index)
+            out_str+=line
+            out_str+="\n"
+        return out_str
         
     def WriteIndexGMX(self,index_file="index.ndx"):
         ############### index ###################
@@ -194,7 +221,7 @@ class PdbBasic:
         if True:
             top_string=str()
             for type,value in self.mol_set.iteritems():
-                if not name_map_dic:
+                if (not name_map_dic) or (type not in name_map_dic) :
                     top_string += "%-15s%d\n" % (type,value)
                 else:
                     top_string += "%-15s%d\n" % (name_map_dic[type],value)
@@ -318,7 +345,7 @@ class PdbBasic:
         """
         output = list()
         for atom in self:
-            n = atom.name.replace(" ", "")
+            n = atom.name.strip()
             if n == name_str:
                 output.append(atom)
         return output
