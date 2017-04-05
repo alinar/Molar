@@ -98,7 +98,9 @@ class Molecule:
         output = np.array([[min_x,max_x],[min_y,max_y],[min_z,max_z]])
         return output
             
-    def EstablishBonds(self):
+    def EstablishBonds(self,max_distance = 1.9):
+        """max_distance is the maximum distance to be accepted as a bond. 
+        """
         if self.bonds_established:
             return
         else:
@@ -114,7 +116,7 @@ class Molecule:
             for atom2 in atom_list:
                 if atom1 is not atom2:
                     d = Distance(atom1,atom2)
-                    if d < 1.8:
+                    if d < max_distance:
                         if atom2.ExtractElement().strip() == "H":
                             if len(atom2.bonded_atoms) > 0: #if atom2 already has a bond link. also hasattr(atom2, 'distance_aux'):
                                 atom2.distance_aux = min (atom2.distance_aux , d)
