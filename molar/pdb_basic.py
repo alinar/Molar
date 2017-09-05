@@ -40,7 +40,7 @@ class PdbBasic:
             if line[0:4] =='ATOM' or (line[0:6]=='HETATM' and self.include_HETATM) :
                 ## add next molecule
                 if termination_reached:
-                    self.AddMolecule(name = line[17:21].replace(" ","") ) # not allow any space
+                    self.AddMolecule(name = line[17:21].strip() ) # not allow any space
                     termination_reached = False
                     id1 = ""
                     id2 = ""
@@ -89,7 +89,7 @@ class PdbBasic:
                 ## add next molecule
                 if termination_reached or (res_num_1 != res_num_2) or (res1 != res2):
                     ##
-                    self.AddMolecule( name=line[17:21].replace(" ","") ) # not allow any space
+                    self.AddMolecule( name=line[17:21].strip() ) # not allow any space
                     self.molecules[-1].AddChain(" ")
                     self.molecules[-1].chains[-1].AddResidue(line[17:21])
                     ##
@@ -356,7 +356,7 @@ class PdbBasic:
         """
         output = list()
         for atom in self:
-            n = atom.name.replace(" ", "")
+            n = atom.name.strip()
             if n == name_str:
                 return atom 
         pass
