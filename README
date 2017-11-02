@@ -1,0 +1,5 @@
+To install the Molar package, you first need to install "vtk" package. Either you can compile and install the source code while 
+having CMake to provide wrapping for python or alternatively install vtkpython (https://www.vtk.org/download/). 
+
+You can install Molar simply by the command:
+pip install git+https://github.com/alinar/Molar
