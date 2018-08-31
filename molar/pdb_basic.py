@@ -40,7 +40,7 @@ class PdbBasic:
             if line[0:4] =='ATOM' or (line[0:6]=='HETATM' and self.include_HETATM) :
                 ## add next molecule
                 if termination_reached:
-                    self.AddMolecule(name = line[17:21].strip() ) # not allow any space
+                    self.AddMolecule( name = line[17:21].strip() )
                     termination_reached = False
                     id1 = ""
                     id2 = ""
@@ -126,6 +126,15 @@ class PdbBasic:
         """This method is to be called by the user.
         """
         self.cryst_string = "CRYST1% 9.3f% 9.3f% 9.3f% 7.2f% 7.2f% 7.2f %-11s%4d\n" % (a,b,c,alpha,beta,gamma,sGroup,zvalue)
+        
+    def DefBox(self , d = [0.0,0.0,0.0]):
+        """define periodic box around the system added the distance d.
+        """
+        b = self.Bounds()
+        l0=b[0,1]-b[0,0]
+        l1=b[1,1]-b[1,0]
+        l2=b[2,1]-b[2,0]
+        self.DefCryst ( a=l0 + 2*d[0] , b=l1 + 2*d[1] ,c=l2 + 2*d[2] )
         
     def WriteOnFile(self,file_name_str,make_TER=False,include_CONECT=False):
         self.Update()
@@ -478,6 +487,6 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("#"*block , "-"*(barLength-block) , progress*100, status)
+    text = "\rProgress: [%s%s] %3.1f %% %s"  %  ("|"*block , "-"*(barLength-block) , progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()
