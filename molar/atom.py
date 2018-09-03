@@ -54,7 +54,7 @@ class Atom:
         self.UpdateCrd()
         self.line  = self.line[:6]   + '%5d' % (atom_sq_number % 100000)  + self.line[11:]
         self.line  = self.line[:22] + '%4d' % (res_sq_number % 10000)    + self.line[26:]
-        self.line  = self.line[:76] + '%2s' % self.element()[-2:] + self.line[78:]
+        self.line  = self.line[:76] + '%2s' % self.element[-2:] + self.line[78:]
         self.index = atom_index
         return self.line
     
@@ -67,15 +67,16 @@ class Atom:
         """ Try to extract the atom element from the atom's name.
         """
         element_str = self.line[76:78].strip()
-        name_strip = self.name.strip()
+        name_stripped = self.name.strip()
         if element_str !='' :
             return element_str
-        if name_strip[0:2] in Atom.two_letter_elements: # two letter elements
-            out = name_strip[0].upper() + name_strip[1].lower()              # return element in upper case.
-            return out.strip()
-        else:
-            if name_strip[0] in Atom.one_letter_elements: # one letter elements
-                return name_strip[0].upper()              # return element in upper case.
+        for i in range(3):  # move from left to right to find a match.
+            if name_stripped[i:i+2] in Atom.two_letter_elements: # two letter elements
+                out = name_stripped[i].upper() + name_stripped[i+1].lower()              # return element in upper case.
+                return out.strip()
+            else:
+                if name_stripped[i] in Atom.one_letter_elements: # one letter elements
+                    return name_stripped[i].upper()              # return element in upper case.
         return ""
                     
                 
