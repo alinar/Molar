@@ -1,4 +1,4 @@
-import pdb_basic
+from . import pdb_basic
 import vtk
 import math
 

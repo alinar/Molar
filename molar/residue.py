@@ -3,7 +3,7 @@ Created on Mar 14, 2014
 
 @author: alinar
 '''
-import atom
+from . import atom
 import numpy as np
 
 class Residue:

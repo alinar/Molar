@@ -3,7 +3,7 @@ Created on Mar 14, 2014
 
 @author: alinar
 '''
-import residue
+from . import residue
 import numpy as np
 
 class Chain:

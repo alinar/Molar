@@ -1,6 +1,6 @@
-import pdb_basic
-import atom
-import pdb_viewer
+from . import pdb_basic
+from . import atom
+from . import pdb_viewer
 import vtk
 import random as rand
 import numpy as np

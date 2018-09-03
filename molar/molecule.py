@@ -3,7 +3,7 @@ Created on Mar 14, 2014
 
 @author: alinar
 '''
-import chain
+from . import chain
 import numpy as np
 
 class Molecule:

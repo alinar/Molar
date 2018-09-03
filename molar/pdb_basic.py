@@ -3,8 +3,8 @@ Created on Mar 14, 2014
 
 @author: alinar
 '''
-import molecule
-import atom
+from . import molecule
+from . import atom
 import numpy as np
 import sys
 
