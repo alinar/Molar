@@ -108,6 +108,18 @@ class PdbBasic:
                 cz = float(line[24:33])
                 self.cryst=[cx,cy,cz]
 
+    def Concatenate(self,pdb_ext):
+        """Transforms a hard copy of pdb_ext and concatenates it to self."""
+        for molecule in pdb_ext.molecules:
+            self.AddMolecule(name=molecule.name)
+            for chain in molecule.chains:
+                self.molecules[-1].AddChain(chain.id)
+                for residue in chain.residues:
+                    self.molecules[-1].chains[-1].AddResidue(residue.name)
+                    for atom in residue.atoms:
+                        atom.UpdateCrd()
+                        self.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
+
     def MakeMolList(self):
         self.mol_set = dict()
         for mol in self.molecules:
@@ -120,7 +132,10 @@ class PdbBasic:
         """printing information about the distributions.
         """
         self.MakeMolList()
-        print "molecule list and quantity:\n" , self.mol_set
+        n = self.NumOfResidues()
+        for mol_name in self.mol_set:
+            print "Molecule Type: %s,   Molecule Quantity: %d ,  ratio: %.1f%%" % (mol_name , self.mol_set[mol_name],  100*float(self.mol_set[mol_name])/n )
+        #print "molecule list and quantity:\n" , self.mol_set
         
     def DefCryst(self,a=100,b=100,c=100,alpha=90,beta=90,gamma=90,sGroup="P 1", zvalue=1):
         """This method is to be called by the user.
@@ -148,7 +163,7 @@ class PdbBasic:
         if include_CONECT:
             file_str+=self.GetConectStr()
         new_file = file(file_name_str , 'w')
-        print "Writing on the file: ",file_name_str
+        print "Writing to the file: ",file_name_str
         new_file.write(file_str)
         new_file.close()
     

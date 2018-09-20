@@ -8,6 +8,8 @@ def Minium_version_required(ver_str):
         sys.exit("Error: The minimum required version of \"molar\" module is %s.\n\
 The installed version is %s\n\
 Please update your molar module from: https://github.com/alinar/Molar\n\
-The path of the module in use is: %s" % ( ver_str,__version__,__path__[0] ) )
+Or use the command:\n\
+sudo pip install git+https://github.com/alinar/Molar\n\
+\nThe path of the module in use is: %s" % ( ver_str,__version__,__path__[0] ) )
     else:
         return True
