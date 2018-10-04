@@ -169,7 +169,7 @@ class PdbBasic:
     
     def WriteOnFileGMX(self,file_name_str,make_TER=False,include_CONECT=False):
         """Write files to be used in GROMACS: 
-        same type molecules are written consecutively.
+        same-type molecules are written consecutively.
         The type of a molecule is its "name" property.
         """
         self.Update()
@@ -177,12 +177,14 @@ class PdbBasic:
         file_str = str()
         if self.cryst_string:
             file_str = file_str + self.cryst_string
-        atom_index = 1
+        atom_index_ = 1
+        resid_ = 1
         for type in self.mol_set:
             for molecule in self.molecules:
                 if molecule.name == type:
-                    file_str = file_str + molecule.GetStr(atom_index , make_TER , update_name=True )
-                    atom_index         += molecule.NumOfAtoms()
+                    file_str = file_str + molecule.GetStr(atom_index=atom_index_ , resid=resid_, make_TER=make_TER , update_name=True )
+                    atom_index_         += molecule.NumOfAtoms()
+                    resid_ +=1
             print "writing molecule type: ",type
         
         if include_CONECT:
@@ -383,7 +385,7 @@ class PdbBasic:
             n = atom.name.strip()
             if n == name_str:
                 return atom 
-        pass
+        return False
 
     def RemoveAtomByFunc(self,func):
         """removes atoms that make func return anything other than False or None

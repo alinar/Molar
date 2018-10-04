@@ -1,5 +1,5 @@
 __all__=["pdb","pdb_viewer","pdb_basic","molecule","chain","residue","atom"]
-__version__ = "2.0.8"
+__version__ = "2.1.0"
 
 import sys
 

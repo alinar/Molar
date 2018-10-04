@@ -15,10 +15,10 @@ class Chain:
     def AddResidue(self,name_str):
         self.residues.append(residue.Residue(name_str))
         
-    def GetStr(self,atom_index=1,make_TER=True):
+    def GetStr(self,atom_index=1,resid=1,make_TER=True):
         out_str = str()
         atom_number = 1
-        res_number  = 1
+        res_number  = resid
 
         for res_itr in self.residues:
             out_str = out_str + res_itr.GetStr(atom_number,res_number,atom_index)

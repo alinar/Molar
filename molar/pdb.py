@@ -14,6 +14,8 @@ class Pdb(pdb_basic.PdbBasic):
     def __init__(self,input_file=False):
         pdb_basic.PdbBasic.__init__(self)
         self.hinge=[0,1]
+        self.pointlocator = False
+        self.unit_cell_size = False
         if input_file:
             self.ReadFile(input_file)
     
@@ -229,11 +231,20 @@ class Pdb(pdb_basic.PdbBasic):
         trans.RotateZ(180)
         self.ApplyTransform(trans)
         
-    def CatTransformedCautious(self,pdb_ext,trans, pointlocator, cutoff = 1.2):
+    def CatTransformedCautious(self,pdb_ext,trans, pointlocator=False, cutoff = 1.2):
         """Transforms pdb_ext and concatenates it to self. checks if the new molecule is not within the
         distance of cutoff from all the points in pointlocator.dataset .
         pointlocator :  vtkPointLocator()
         """
+        ## fix the pointlocator ##
+        if not pointlocator:
+            if not self.pointlocator:  # if it is not externally provided, create one and attach it to the object.
+                self.pointlocator = vtk.vtkPointLocator()
+                self.pointlocator.Initialize()
+                self.pointlocator.SetDataSet(vtk.vtkPolyData())
+                self.pointlocator.InitPointInsertion(vtk.vtkPoints(), [0,100,0,100,0,100])
+            pointlocator = self.pointlocator
+        ##
         pdb_aux = pdb_ext.MakeCopy()
         pdb_aux.ApplyTransform(trans)
         dataset = pointlocator.GetDataSet()
@@ -253,26 +264,26 @@ class Pdb(pdb_basic.PdbBasic):
         ## There have been no atom within the cutoff distance. 
         self.Concatenate(pdb_aux)
         ## add the newly added atom's position and its repeats to the pointlocator.
-        pos = [0,0,0]
         for atom_itr in pdb_aux:
             points.InsertNextPoint(atom_itr.pos)
             pointlocator.InsertNextPoint(atom_itr.pos)
             ## if atom position is close to any border of cell, it should be repeated in the locator.
-            close_coords = []  
-            for coord in [0,1,2]:
-                if (self.unit_cell_size - atom_itr.pos[coord]) < (2*cutoff)  or (atom_itr.pos[coord] > self.unit_cell_size):
-                    close_coords.append(-1*coord)
-                elif abs(atom_itr.pos[coord]) < (2*cutoff) or (atom_itr.pos[coord] < 0) :
-                    close_coords.append(coord)
-
-            for i in [1,2,3]: # extract subsets of close_coords with 1, 2 or 3 members
-                close_coords_set_of_subsets = set( itertools.combinations(close_coords,i) )
-                for close_coords_subset in close_coords_set_of_subsets:
-                    atom_pos_aux = np.copy(atom_itr.pos)
-                    for close_coords_member in close_coords_subset:
-                        atom_pos_aux[abs(close_coords_member)] += np.sign(close_coords_member) * self.unit_cell_size
-                    points.InsertNextPoint(atom_pos_aux)
-                    pointlocator.InsertNextPoint(atom_pos_aux)
+            if self.unit_cell_size:
+                close_coords = []
+                for coord in [0,1,2]:
+                    if (self.unit_cell_size - atom_itr.pos[coord]) < (2*cutoff)  or (atom_itr.pos[coord] > self.unit_cell_size):
+                        close_coords.append(-1*coord)
+                    elif abs(atom_itr.pos[coord]) < (2*cutoff) or (atom_itr.pos[coord] < 0) :
+                        close_coords.append(coord)
+                for i in [1,2,3]: # extract subsets of close_coords with 1, 2 or 3 members
+                    close_coords_set_of_subsets = set( itertools.combinations(close_coords,i) )
+                    for close_coords_subset in close_coords_set_of_subsets:
+                        atom_pos_aux = np.copy(atom_itr.pos)
+                        for close_coords_member in close_coords_subset:
+                            atom_pos_aux[abs(close_coords_member)] += np.sign(close_coords_member) * self.unit_cell_size
+                        points.InsertNextPoint(atom_pos_aux)
+                        pointlocator.InsertNextPoint(atom_pos_aux)
+            ##
         return True
          
 ###################################################

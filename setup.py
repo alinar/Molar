@@ -7,7 +7,7 @@ except ImportError:
 from setuptools import setup, find_packages
 
 setup(name='molar',
-      version='2.0.8',
+      version='2.1.0',
       description='',
       url='https://github.com/alinar/Molar',
       author='Ali Narangifard',
