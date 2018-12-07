@@ -17,7 +17,7 @@ class Molecule:
         new_chain = chain.Chain(chain_id_str)
         self.chains.append(new_chain)
         
-    def GetStr(self,atom_index = 1, resid=1 ,make_TER=True,update_name=False):
+    def GetStr(self,atom_index = 1, resid=1 ,make_TER=False,update_name=False):
         """name_res writes the molecule name on residue name domain on the pdb file.
            (residue name has 4 characters to be compatible with GMX.)
         """
@@ -75,6 +75,16 @@ class Molecule:
     def ApplyTransform(self,trans): # trans is vtk.vtkTransform
         for atom in self:
             atom.ApplyTransform(trans)
+
+    def GetAtomsByName(self,name_str):
+        """Atom name has maximum four chars.
+        """
+        output = list()
+        for atom in self:
+            n = atom.name.strip()
+            if n == name_str:
+                output.append(atom)
+        return output
             
     def Bounds(self):
         min_x = 1e9 

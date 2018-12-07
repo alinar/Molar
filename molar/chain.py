@@ -15,7 +15,7 @@ class Chain:
     def AddResidue(self,name_str):
         self.residues.append(residue.Residue(name_str))
         
-    def GetStr(self,atom_index=1,resid=1,make_TER=True):
+    def GetStr(self,atom_index=1,resid=1,make_TER=False):
         out_str = str()
         atom_number = 1
         res_number  = resid

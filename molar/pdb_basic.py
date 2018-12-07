@@ -55,12 +55,12 @@ class PdbBasic:
                 if id1 != id2 :
                     ## add chain
                     self.molecules[-1].AddChain(id1)
-                if (res_num_1 != res_num_2) or (res1 != res2):
+                if (res_num_1 != res_num_2) or (res1 != res2) or len(self.molecules[-1].chains[-1].residues)==0:
                     ## add residue
                     self.molecules[-1].chains[-1].AddResidue(line[17:20])
                 ## add atom
                 self.molecules[-1].chains[-1].residues[-1].AddAtom(line)
-                id2 = line[21] 
+                id2 = id1
                 res_num_2   = int(line[22:26])
                 res2        = line[17:20]
             elif line[0:3]=='TER' : ## prepare to add a molecule.
