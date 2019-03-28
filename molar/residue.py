@@ -14,7 +14,12 @@ class Residue:
         
     def AddAtom(self,line_str):
         self.atoms.append(atom.Atom(line_str))
+        return self.atoms[-1]
         
+    def AddAtomFromCoordinates(self,coor=[0.0,0.0,0.0],name="C"):
+        self.atoms.append( atom.Atom.FromCoordinates(coor,name) )
+        return self.atoms[-1]
+    
     def GetStr(self,atom_number=1,res_number=1,atom_index=1):
         out_str = str()
         for atom_itr in self.atoms:

@@ -12,8 +12,9 @@ class Chain:
         self.id = id_ext
         self.residues = []
         
-    def AddResidue(self,name_str):
-        self.residues.append(residue.Residue(name_str))
+    def AddResidue(self,name=" "):
+        self.residues.append(residue.Residue(name))
+        return self.residues[-1]
         
     def GetStr(self,atom_index=1,resid=1,make_TER=False):
         out_str = str()

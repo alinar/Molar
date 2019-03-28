@@ -30,6 +30,7 @@ class PdbBasic:
         else:           
             mol = molecule.Molecule(name);
             self.molecules.append(mol)
+        return self.molecules[-1]
     
     def ReadFile(self,file_name_str):
         pdb_file   = open(file_name_str)
@@ -366,6 +367,16 @@ class PdbBasic:
             if len(mol.chains)==0:
                 self.molecules.remove(mol)
                 
+    def GetMoleculesByName(self,name_str):
+        """Atom name has maximum four chars.
+        """
+        output = list()
+        for mol in self.molecules:
+            n = mol.name.strip()
+            if n == name_str:
+                output.append(mol)
+        return output
+                
     def GetAtomsByName(self,name_str):
         """Atom name has maximum four chars.
         """
@@ -412,6 +423,8 @@ class PdbBasic:
             self.AddMolecule(molecule,name=molecule.name)
     
     def MakeBackwardLinks(self):
+        """ Every component will know its parent component.
+        """
         for molecule in self.molecules:
             for chain in molecule.chains:
                 chain.molecule = molecule

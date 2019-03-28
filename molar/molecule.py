@@ -13,9 +13,10 @@ class Molecule:
         self.name   = name_ #if needed!#
         self.bonds_established = False
         
-    def AddChain(self,chain_id_str):
+    def AddChain(self,chain_id_str=" "):
         new_chain = chain.Chain(chain_id_str)
         self.chains.append(new_chain)
+        return self.chains[-1]
         
     def GetStr(self,atom_index = 1, resid=1 ,make_TER=False,update_name=False):
         """name_res writes the molecule name on residue name domain on the pdb file.
@@ -110,7 +111,8 @@ class Molecule:
         return output
             
     def EstablishBonds(self,max_distance = 1.9):
-        """max_distance is the maximum distance to be accepted as a bond. 
+        """
+        max_distance is the maximum distance to be accepted as a bond. 
         """
         if self.bonds_established:
             return

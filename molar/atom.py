@@ -29,6 +29,16 @@ class Atom:
         self.element = self.ExtractElement()
         self.bonded_atoms=[]
         
+    @classmethod
+    def FromCoordinates(cls, pos = [0.0,0.0,0.0] , name="C" ):
+        line = "ATOM      1              1       0.000   0.000   0.000  1.00  0.00            "
+        line = line[:30] + "%8.3f" % pos[0] + line[38:]
+        line = line[:38] + "%8.3f" % pos[1] + line[46:]
+        line = line[:46] + "%8.3f" % pos[2] + line[54:]
+        line = line[:12] +  "%4.4s" % name + line[16:]
+        atom = cls(line)
+        return atom
+        
     def ApplyTransform(self,trans): # trans is a vtk.vtkTransfom()
         trans.TransformPoint(self.pos,self.pos)
         self.UpdateCrd()
@@ -46,16 +56,18 @@ class Atom:
             pass
         
     def GetMolNameGMX(self):
-        """Returns the molecules name with Gromacs standard.
+        """Returns the molecule's name with Gromacs standard.
         """
         return self.line[17:21].strip()
     
     def GetStr(self,atom_sq_number=1,res_sq_number=1,atom_index=1):
         self.UpdateCrd()
+        
         self.line  = self.line[:6]   + '%5d' % (atom_sq_number % 100000)  + self.line[11:]
         self.line  = self.line[:22] + '%4d' % (res_sq_number % 10000)    + self.line[26:]
-        self.line  = self.line[:76] + '%2s' % self.element[-2:] + self.line[78:]
+        self.line  = self.line[:76] + '%2.2s' % self.element.strip() + self.line[78:]
         self.index = atom_index
+        print self.line
         return self.line
     
     def TakeToOrigin(self):
