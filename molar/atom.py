@@ -67,7 +67,6 @@ class Atom:
         self.line  = self.line[:22] + '%4d' % (res_sq_number % 10000)    + self.line[26:]
         self.line  = self.line[:76] + '%2.2s' % self.element.strip() + self.line[78:]
         self.index = atom_index
-        print self.line
         return self.line
     
     def TakeToOrigin(self):
