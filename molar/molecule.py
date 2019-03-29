@@ -5,6 +5,7 @@ Created on Mar 14, 2014
 '''
 from . import chain
 import numpy as np
+import random
 
 class Molecule:
 
@@ -146,6 +147,40 @@ class Molecule:
                         else:
                             atom1.bonded_atoms.append(atom2)
                             # atom2 will find and append atom1 automatically since none are hydrogens
+    
+    def AddHydrogen(self):
+        """
+        works if atoms have num_hydrogen set. The positions of hydrogens are NOT accurate.
+        """
+        # add hydrogen:
+        if True:
+            atom_list = []
+            for atom in self:  # atom_list should've been made since the iterator does not work for nested for loops.
+                atom_list.append(atom)
+            self.MakeBackwardLinks()
+            for atom in atom_list:  # atom_list should be used instead of "self" because atoms are added.
+                 for i in range(atom.num_hydrogen ):
+                     d = np.array([0.0,0.0,1.1])
+                     d = RotateX(d,360*random.random())
+                     d = RotateY(d,360*random.random())
+                     d = RotateZ(d,360*random.random())
+                     H_atom = atom.residue.AddAtomFromCoordinates(atom.pos+d,"H",next_to_atom=atom)
+                     H_atom.bonded_atoms = [atom]
+                     atom.bonded_atoms.append(H_atom)
+                 pass
+            
+                    
+    def MakeBackwardLinks(self):
+        """ Every component will know its parent component.
+        """
+        for chain in self.chains:
+            chain.molecule = self
+            for residue in chain.residues:
+                residue.chain = chain
+                for atom in residue.atoms:
+                    atom.residue = residue
+        pass        
+
 
     #################################
     ######## iterator ###############
@@ -175,4 +210,19 @@ class Molecule:
 def Distance(atom1,atom2):
     return np.linalg.norm(  [ atom1.pos[0] - atom2.pos[0] , atom1.pos[1] - atom2.pos[1] , atom1.pos[2] - atom2.pos[2] ] )
     pass
+    
+def RotateX(np_array, angle):
+    theta = np.deg2rad(angle)
+    rotation_matrix = np.array ( [  [1. ,0. , 0.] , [ 0. , np.cos(theta) ,np.sin(theta) ] , [ 0. , -np.sin(theta) ,  np.cos(theta)]  ] ).transpose()
+    return np.matmul (rotation_matrix , np_array  )
+    
+def RotateY(np_array, angle):
+    theta = np.deg2rad(angle)
+    rotation_matrix = np.array ( [  [np.cos(theta)  ,0. , np.sin(theta)] , [ 0. , 1., 0. ] , [ -np.sin(theta) , 0 ,  np.cos(theta)]  ] ).transpose()
+    return(np.matmul (rotation_matrix , np_array  ) )
+
+def RotateZ(np_array, angle):
+    theta = np.deg2rad(angle)
+    rotation_matrix = np.array ( [  [np.cos(theta)  , -np.sin(theta) , 0.] , [ np.sin(theta), np.cos(theta) , 0. ] , [ 0. , 0.  ,  1.  ] ] ).transpose()
+    return(np.matmul (rotation_matrix , np_array  ) )
     

@@ -16,8 +16,15 @@ class Residue:
         self.atoms.append(atom.Atom(line_str))
         return self.atoms[-1]
         
-    def AddAtomFromCoordinates(self,coor=[0.0,0.0,0.0],name="C"):
-        self.atoms.append( atom.Atom.FromCoordinates(coor,name) )
+    def AddAtomFromCoordinates(self,coor=[0.0,0.0,0.0],name="C", next_to_atom=False):
+        if not next_to_atom:
+            self.atoms.append( atom.Atom.FromCoordinates(coor,name) )
+        else:
+            atom_list = []
+            for i in range(len(self.atoms)):
+                if next_to_atom == self.atoms[i]:
+                    self.atoms.insert(i+1, atom.Atom.FromCoordinates(coor,name) )
+                    break
         return self.atoms[-1]
     
     def GetStr(self,atom_number=1,res_number=1,atom_index=1):

@@ -28,6 +28,7 @@ class Atom:
         self.index  = 1
         self.element = self.ExtractElement()
         self.bonded_atoms=[]
+        self.num_hydrogen=False
         
     @classmethod
     def FromCoordinates(cls, pos = [0.0,0.0,0.0] , name="C" ):
