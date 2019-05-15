@@ -7,12 +7,13 @@ from . import molecule
 from . import atom
 import numpy as np
 import sys
+from collections import OrderedDict
 
 class PdbBasic:
 
     def __init__(self):
         self.molecules = []
-        self.index     = dict()     # make index file to be used with Gromacs.
+        self.index     = OrderedDict()     # make index file to be used with Gromacs. OrderedDict is like Dict but it keeps the order.
         self.include_HETATM = True  # change it to False if you do not want to include HETATM.
         self.mol_set = False
         self.empty   = True         # some methods use it.
@@ -122,7 +123,7 @@ class PdbBasic:
                         self.molecules[-1].chains[-1].residues[-1].AddAtom(atom.line)
 
     def MakeMolList(self):
-        self.mol_set = dict()
+        self.mol_set = OrderedDict() # instead of dict() to preserve the order 
         for mol in self.molecules:
             if mol.name in self.mol_set:
                 self.mol_set[mol.name] += 1
@@ -214,25 +215,29 @@ class PdbBasic:
             out_str+="\n"
         return out_str
         
-    def WriteIndexGMX(self,index_file="index.ndx"):
+    def WriteIndexGMX(self,index_file="index.ndx",include_system=False):
         ############### index ###################
         ## make System index including all the atoms.
+        """Must be called after WriteOnFileGMX()
+        """
         self.Update()
-        if True:
+        if include_system:
             ## System group with all of the atoms. Other index groups should be made.
             self.index["System"]=list()
             for atom in self:
                 self.index["System"].append(atom)
-            ## 
+            ##
+        if True: 
             ndx_string = str()
             for key,value in self.index.iteritems():
                 ndx_string += "[ %s ]\n" % (key)
                 line_watch = 0
                 for atom in value:
+                    #print key ,  atom.name , atom.index , atom.residue.chain.molecule.name
                     if line_watch == 10:
                         ndx_string += "\n"
                         line_watch = 0
-                    ndx_string += "%9d " % (atom.index)
+                    ndx_string += "%10d " % (atom.index)
                     line_watch += 1
                 ndx_string += "\n"
             new_file = file(index_file , 'w')

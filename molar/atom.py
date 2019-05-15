@@ -79,16 +79,16 @@ class Atom:
         """ Try to extract the atom element from the atom's name.
         """
         element_str = self.line[76:78].strip()
-        name_stripped = self.name.strip()
+        name = self.name
         if element_str !='' :
             return element_str
         for i in range(3):  # move from left to right to find a match.
-            if name_stripped[i:i+2] in Atom.two_letter_elements: # two letter elements
-                out = name_stripped[i].upper() + name_stripped[i+1].lower()              # return element in upper case.
+            if name[i:i+2].capitalize() in Atom.two_letter_elements: # two letter elements
+                out = name[i:i+2].capitalize() 
                 return out.strip()
             else:
-                if name_stripped[i] in Atom.one_letter_elements: # one letter elements
-                    return name_stripped[i].upper()              # return element in upper case.
+                if name[i] in Atom.one_letter_elements: # one letter elements
+                    return name[i].upper()              # return element in upper case.
         return ""
                     
                 
